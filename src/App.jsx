@@ -28,7 +28,7 @@ function App() {
   const [screen, setScreen] = useState(SCREENS.HOME);
   const [csid, setCsid] = useState(null);
   const [hasInit, setHasInit] = useState(false);
-
+  const [apiStatus, setApiStatus] = useState('Idle');
 
   // init CSID once
   useEffect(() => {
@@ -48,32 +48,67 @@ function App() {
     }
   };
 
-  const sendApiEvent = (action, activityType) => {
-    fetch('https://hooks.zapier.com/hooks/catch/19247019/uwr0vff/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customerId: 'dummy',
-        action,
-        customerSessionId: csid,
-        activityType,
-        uuid: crypto.randomUUID(),
-        brand: 'SD',
-        solution: 'ATO',
-        iam: 'shaharshlomo6@gmail.com'
-      })
-    })
-      .then(() => console.log(action, 'sent'))
-      .catch(err => console.error('API error:', err));
+const validateApiResponse = (action, data) => {
+  const isValid =
+    data &&
+    data.status === 'success' &&
+    typeof data.id === 'string' &&
+    typeof data.request_id === 'string';
+
+  if (isValid) {
+    console.log('Response validation passed:', data);
+    setApiStatus(`✅ ${action} validated (success)`);
+  } else {
+    console.warn('Response validation failed:', data);
+    setApiStatus(`⚠️ ${action} response invalid`);
+  }
+};
+
+
+
+const sendApiEvent = async (action, activityType) => {
+  // UI status (shown on the page)
+  setApiStatus(`Sending ${action}...`);
+
+    try {
+      const res = await fetch('https://hooks.zapier.com/hooks/catch/19247019/uwr0vff/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: 'dummy',
+          action,
+          customerSessionId: csid,
+          activityType,
+          uuid: crypto.randomUUID(),
+          brand: 'SD',
+          solution: 'ATO',
+          iam: 'shaharshlomo6@gmail.com'
+        })
+      });
+
+      console.log('API HTTP status:', res.status);
+      setApiStatus(`Sent ${action}. HTTP ${res.status}`);
+
+      // Try to parse JSON (might fail)
+      try {
+        const data = await res.json();
+        validateApiResponse(action, data);
+
+      // validateApiResponse will log to console (and later we can also update UI from there if you want)
+      } catch (jsonErr) {
+        console.warn('Could not parse JSON response:', jsonErr);
+        setApiStatus(`⚠️ ${action} sent, but no JSON to validate`);
+      }
+
+    } catch (err) {
+      // CORS / Network / blocked request
+      console.warn('API request failed (likely CORS). Continuing flow anyway:', err);
+      setApiStatus(`⚠️ ${action} blocked (likely CORS) - continuing`);
+    }
   };
 
 
-  const handleUserAction = ({ 
-  action, 
-  activityType, 
-  context, 
-  nextScreen 
-  }) => {
+  const handleUserAction = async ({ action, activityType, context, nextScreen }) => {
     console.log('User action:', action);
 
     if (context) {
@@ -81,18 +116,23 @@ function App() {
     }
 
     if (action && activityType) {
-      sendApiEvent(action, activityType);
+      await sendApiEvent(action, activityType);
     }
 
+    // Always move forward
     if (nextScreen) {
       setScreen(nextScreen);
     }
   };
 
 
+
   return (
     <div style={{ padding: 20 }}>
-      <h1>BioCatch SPA Demo</h1>
+      <h1>BioCatch Assignment - Shahar Shlomo</h1>
+
+      <p><b>API Status:</b> {apiStatus}</p>
+
 
       {/* Home Screen */}
       {screen === SCREENS.HOME && (
@@ -111,8 +151,8 @@ function App() {
       {screen === SCREENS.LOGIN && (
         <>
           <p>Login Screen</p>
-          <button onClick={() => {
-            handleUserAction({
+          <button onClick={async () => {
+            await handleUserAction({
               action: ACTIONS.INIT,
               activityType: ACTIVITY_TYPES.LOGIN,
               nextScreen: SCREENS.ACCOUNT
@@ -121,6 +161,7 @@ function App() {
           }}>
             Login
           </button>
+
         </>
       )}
 
@@ -143,8 +184,10 @@ function App() {
           <p>Payment Screen</p>
           <button onClick={() => {
 
-            if (!hasInit) return;
-
+        if (!hasInit) {
+          console.warn('Blocked getScore: init was not triggered yet');
+          return;
+        }
             handleUserAction({
               action: ACTIONS.GET_SCORE,
               activityType: ACTIVITY_TYPES.PAYMENT,
