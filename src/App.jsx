@@ -1,8 +1,34 @@
 import { useEffect, useState } from 'react';
 
+
+const SCREENS = {
+  HOME: 'home',
+  LOGIN: 'login',
+  ACCOUNT: 'account',
+  PAYMENT: 'payment',
+  LOGOUT: 'logout'
+};
+
+const CONTEXTS = {
+  LOGIN: 'login_screen',
+  PAYMENT: 'payment_screen'
+};
+
+const ACTIONS = {
+  INIT: 'init',
+  GET_SCORE: 'getScore'
+};
+
+const ACTIVITY_TYPES = {
+  LOGIN: 'LOGIN',
+  PAYMENT: 'PAYMENT'
+};
+
 function App() {
-  const [screen, setScreen] = useState('home');
+  const [screen, setScreen] = useState(SCREENS.HOME);
   const [csid, setCsid] = useState(null);
+  const [hasInit, setHasInit] = useState(false);
+
 
   // init CSID once
   useEffect(() => {
@@ -41,68 +67,107 @@ function App() {
       .catch(err => console.error('API error:', err));
   };
 
+
+  const handleUserAction = ({ 
+  action, 
+  activityType, 
+  context, 
+  nextScreen 
+  }) => {
+    console.log('User action:', action);
+
+    if (context) {
+      changeContext(context);
+    }
+
+    if (action && activityType) {
+      sendApiEvent(action, activityType);
+    }
+
+    if (nextScreen) {
+      setScreen(nextScreen);
+    }
+  };
+
+
   return (
     <div style={{ padding: 20 }}>
       <h1>BioCatch SPA Demo</h1>
 
-      {screen === 'home' && (
+      {/* Home Screen */}
+      {screen === SCREENS.HOME && (
         <>
           <p>Home Screen</p>
           <button onClick={() => {
-            setScreen('login');
-            changeContext('login_screen');
+            setScreen(SCREENS.LOGIN);
+            changeContext(CONTEXTS.LOGIN);
           }}>
             Go to Login
           </button>
         </>
       )}
 
-      {screen === 'login' && (
+      {/* Login Screen */}
+      {screen === SCREENS.LOGIN && (
         <>
           <p>Login Screen</p>
           <button onClick={() => {
-            sendApiEvent('init', 'LOGIN');
-            setScreen('account');
+            handleUserAction({
+              action: ACTIONS.INIT,
+              activityType: ACTIVITY_TYPES.LOGIN,
+              nextScreen: SCREENS.ACCOUNT
+            });
+            setHasInit(true);
           }}>
             Login
           </button>
         </>
       )}
 
-      {screen === 'account' && (
+      {/* Account Overview Screen */}
+      {screen === SCREENS.ACCOUNT && (
         <>
-          <p>Account Overview</p>
-          <button onClick={() => {
-            setScreen('payment');
-            changeContext('payment_screen');
-          }}>
-            Make Payment
-          </button>
+        <p>Account Overview</p>
+        <button onClick={() => {
+          setScreen(SCREENS.PAYMENT);
+          changeContext(CONTEXTS.PAYMENT);
+        }}>
+          Make Payment
+        </button>
         </>
       )}
 
-      {screen === 'payment' && (
+      {/* Payment Screen */}
+      {screen === SCREENS.PAYMENT && (
         <>
           <p>Payment Screen</p>
           <button onClick={() => {
-            sendApiEvent('getScore', 'PAYMENT');
-            setScreen('logout');
+
+            if (!hasInit) return;
+
+            handleUserAction({
+              action: ACTIONS.GET_SCORE,
+              activityType: ACTIVITY_TYPES.PAYMENT,
+              nextScreen: SCREENS.LOGOUT
+            });
           }}>
             Pay
           </button>
         </>
       )}
 
-      {screen === 'logout' && (
+      {/* Logout Screen */}
+      {screen === SCREENS.LOGOUT && (
         <>
           <p>Logged Out</p>
           <button onClick={() => {
-            setScreen('home');
+            setScreen(SCREENS.HOME);
           }}>
             Back to Home
           </button>
         </>
       )}
+
     </div>
   );
 }
