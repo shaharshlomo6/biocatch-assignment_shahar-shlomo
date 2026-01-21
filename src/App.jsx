@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import './App.css';
 
 
 const SCREENS = {
@@ -26,6 +27,7 @@ const ACTIVITY_TYPES = {
 
 function App() {
   const [screen, setScreen] = useState(SCREENS.HOME);
+  const [uiMessage, setUiMessage] = useState(''); 
   const [csid, setCsid] = useState(null);
   const [hasInit, setHasInit] = useState(false);
   const [apiStatus, setApiStatus] = useState('Idle');
@@ -57,10 +59,10 @@ const validateApiResponse = (action, data) => {
 
   if (isValid) {
     console.log('Response validation passed:', data);
-    setApiStatus(`✅ ${action} validated (success)`);
+    setApiStatus(`${action} validated (success)`);
   } else {
     console.warn('Response validation failed:', data);
-    setApiStatus(`⚠️ ${action} response invalid`);
+    setApiStatus(`${action} response invalid`);
   }
 };
 
@@ -128,39 +130,87 @@ const sendApiEvent = async (action, activityType) => {
 
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{
+  minHeight: '100vh',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center'
+}}>
+  <div style={{
+    width: 520,
+    padding: 20,
+    border: '1px solid #ddd',
+    borderRadius: 10
+  }}>
+
       <h1>BioCatch Assignment - Shahar Shlomo</h1>
 
       <p><b>API Status:</b> {apiStatus}</p>
+      <p><b>Logged In:</b> {hasInit ? 'Yes' : 'No'}</p>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'center', margin: '12px 0' }}>
+      <button onClick={() => { setUiMessage(''); setScreen(SCREENS.HOME); }}>
+        Home
+      </button>
+
+      <button onClick={() => { setUiMessage(''); setScreen(SCREENS.LOGIN); changeContext(CONTEXTS.LOGIN); }}>
+        Login
+      </button>
+
+      <button onClick={() => { setUiMessage(''); setScreen(SCREENS.ACCOUNT); }}>
+        Account
+      </button>
+
+      <button onClick={() => { setUiMessage(''); setScreen(SCREENS.PAYMENT); changeContext(CONTEXTS.PAYMENT); }}>
+        Payment
+      </button>
+
+      <button onClick={() => {
+        setUiMessage('');
+        setApiStatus('Idle');
+        setHasInit(false);
+        setScreen(SCREENS.LOGOUT);
+      }}>
+        Logout
+      </button>
+      </div>
+      {uiMessage && (
+      <p style={{
+        textAlign: 'center',
+        marginTop: 10,
+        color: uiMessage.startsWith('Error:') ? 'crimson' : 'green'
+      }}>
+        <b>{uiMessage}</b>
+      </p>
+      )}
+
+
 
 
       {/* Home Screen */}
       {screen === SCREENS.HOME && (
         <>
           <p>Home Screen</p>
-          <button onClick={() => {
-            setScreen(SCREENS.LOGIN);
-            changeContext(CONTEXTS.LOGIN);
-          }}>
-            Go to Login
-          </button>
+          <p>Welcome! Use the navigation buttons above.</p>
+
         </>
       )}
 
       {/* Login Screen */}
       {screen === SCREENS.LOGIN && (
         <>
-          <p>Login Screen</p>
-          <button onClick={async () => {
-            await handleUserAction({
-              action: ACTIONS.INIT,
-              activityType: ACTIVITY_TYPES.LOGIN,
-              nextScreen: SCREENS.ACCOUNT
-            });
-            setHasInit(true);
-          }}>
-            Login
-          </button>
+        <p>Login Screen</p>
+        <button onClick={async () => {
+          setUiMessage('');
+          await handleUserAction({
+            action: ACTIONS.INIT,
+            activityType: ACTIVITY_TYPES.LOGIN
+          });
+          setHasInit(true);
+          setUiMessage('Logged in (init called). You can now pay.');
+        }}>
+          Run Login (init)
+        </button>
+
 
         </>
       )}
@@ -168,13 +218,8 @@ const sendApiEvent = async (action, activityType) => {
       {/* Account Overview Screen */}
       {screen === SCREENS.ACCOUNT && (
         <>
-        <p>Account Overview</p>
-        <button onClick={() => {
-          setScreen(SCREENS.PAYMENT);
-          changeContext(CONTEXTS.PAYMENT);
-        }}>
-          Make Payment
-        </button>
+      <p>Account Overview (dummy)</p>
+
         </>
       )}
 
@@ -182,36 +227,53 @@ const sendApiEvent = async (action, activityType) => {
       {screen === SCREENS.PAYMENT && (
         <>
           <p>Payment Screen</p>
-          <button onClick={() => {
 
-        if (!hasInit) {
-          console.warn('Blocked getScore: init was not triggered yet');
-          return;
-        }
-            handleUserAction({
+          {!hasInit && (
+            <p style={{ color: 'crimson', textAlign: 'center' }}>
+              <b>Error:</b> You must login before making a payment.
+            </p>
+          )}
+
+          <button onClick={async () => {
+            if (!hasInit) {
+              const msg = 'Error: Please login first (init must be called before getScore).';
+              console.warn(msg);
+              setUiMessage(msg);
+              return;
+            }
+
+            setUiMessage('');
+            await handleUserAction({
               action: ACTIONS.GET_SCORE,
-              activityType: ACTIVITY_TYPES.PAYMENT,
-              nextScreen: SCREENS.LOGOUT
+              activityType: ACTIVITY_TYPES.PAYMENT
             });
+            setUiMessage('Payment submitted (getScore called).');
           }}>
-            Pay
+            Pay (getScore)
           </button>
         </>
       )}
+
 
       {/* Logout Screen */}
       {screen === SCREENS.LOGOUT && (
         <>
           <p>Logged Out</p>
           <button onClick={() => {
+            setUiMessage('');
+            setApiStatus('Idle');
+            setHasInit(false);
             setScreen(SCREENS.HOME);
           }}>
             Back to Home
-          </button>
+        </button>
+
+
         </>
       )}
 
     </div>
+</div>
   );
 }
 
