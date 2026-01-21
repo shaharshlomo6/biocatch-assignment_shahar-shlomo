@@ -32,16 +32,25 @@ function App() {
   const [hasInit, setHasInit] = useState(false);
   const [apiStatus, setApiStatus] = useState('Idle');
 
-  // init CSID once
-  useEffect(() => {
+
+  const generateNewSession = () => {
     const newCsid = 'csid-' + crypto.randomUUID();
     setCsid(newCsid);
+    setHasInit(false); 
 
     if (window.cdApi) {
       cdApi.setCustomerSessionId(newCsid);
       console.log('CSID set:', newCsid);
-    }
-  }, []);
+      }
+
+      return newCsid;
+  };
+
+    // init CSID each time app loads
+    useEffect(() => {
+      generateNewSession();
+    }, []);
+
 
   const changeContext = (context) => {
     if (window.cdApi) {
@@ -167,11 +176,14 @@ const sendApiEvent = async (action, activityType) => {
       <button onClick={() => {
         setUiMessage('');
         setApiStatus('Idle');
-        setHasInit(false);
         setScreen(SCREENS.LOGOUT);
+
+        // prepare a NEW session for the next login (logout -> login)
+        generateNewSession();
       }}>
         Logout
       </button>
+
       </div>
       {uiMessage && (
       <p style={{
