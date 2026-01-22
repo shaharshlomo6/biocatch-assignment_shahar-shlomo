@@ -12,6 +12,8 @@ The app loads the provided client-side JavaScript SDK, generates and manages a *
 - Generates a CSID and calls:
   - `cdApi.setCustomerSessionId(CSID)`
   - `cdApi.changeContext(contextName)` per screen
+    
+- SDK verification: open DevTools Console and see `CSID set: ...` and `Context: ...` logs when navigating between screens.
 
 ### 2) User Journey Simulation (SPA)
 Screens:
@@ -28,6 +30,35 @@ Screens:
 
 ### 4) Guardrail: `getScore` Only After `init`
 - If the user tries to pay before login, the app shows a clear UI error message and logs it to the console.
+
+---
+
+## Unit Tests
+
+This project includes basic unit tests using **Vitest** + **React Testing Library**.
+
+### What’s covered
+- Home screen renders correctly.
+- Trying to pay without login shows an error message in the UI.
+- Clicking Login triggers an `init` API request (mocked `fetch`).
+
+### How to run tests
+
+```bash
+npm test
+```
+
+
+Tests are located in:
+
+src/App.test.jsx
+
+Test setup:
+
+vite.config.js (Vitest config)
+
+src/setupTests.js (jest-dom matchers)
+
 
 ---
 
@@ -54,3 +85,13 @@ Expected (example):
   "request_id": "019b...",
   "status": "success"
 }
+```
+
+
+## Quick Start
+
+```bash
+npm install
+npm run dev
+```
+
