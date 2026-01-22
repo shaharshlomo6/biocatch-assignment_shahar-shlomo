@@ -1,16 +1,56 @@
-# React + Vite
+# BioCatch Web SDK Assignment – Shahar Shlomo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A simple React Single Page Application that simulates an online user journey:
+**Home → Login → Account Overview → Make Payment → Logout**.
 
-Currently, two official plugins are available:
+The app loads the provided client-side JavaScript SDK, generates and manages a **Customer Session ID (CSID)**, changes context per screen, and triggers mocked server-side API calls (`init`, `getScore`) using `fetch`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+### 1) Client-Side SDK Integration
+- Loads the provided SDK script in `index.html`.
+- Generates a CSID and calls:
+  - `cdApi.setCustomerSessionId(CSID)`
+  - `cdApi.changeContext(contextName)` per screen
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2) User Journey Simulation (SPA)
+Screens:
+- Home
+- Login (triggers `init`)
+- Account Overview
+- Payment (triggers `getScore`)
+- Logout
 
-## Expanding the ESLint configuration
+### 3) API Flow Simulation (Frontend Only)
+- Sends `POST` requests using `fetch` to the provided Zapier webhook endpoint:
+  - `action: "init"` on Login
+  - `action: "getScore"` on Payment
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 4) Guardrail: `getScore` Only After `init`
+- If the user tries to pay before login, the app shows a clear UI error message and logs it to the console.
+
+---
+
+## Note About CORS
+
+The webhook endpoint may block browser calls due to **CORS policy** (no `Access-Control-Allow-Origin` header).
+Because of that, the browser may fail the request before returning a readable response.
+
+This project:
+- The app **still continues the user flow** even if the request is blocked.
+- The app prints the error to console (expected behavior for this assignment environment).
+- If the response is available, the app attempts to parse JSON and validate it.
+
+---
+
+## Response Validation (Console Only)
+When a JSON response is available, the app performs a simple validation and logs the result.
+
+Expected (example):
+```json
+{
+  "attempt": "xxxx",
+  "id": "019b...",
+  "request_id": "019b...",
+  "status": "success"
+}
