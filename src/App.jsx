@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 
-
+// enum-like constants for screens, contexts, actions, activity types
 const SCREENS = {
   HOME: 'home',
   LOGIN: 'login',
@@ -25,6 +25,8 @@ const ACTIVITY_TYPES = {
   PAYMENT: 'PAYMENT'
 };
 
+
+// Main App component
 function App() {
   const [screen, setScreen] = useState(SCREENS.HOME);
   const [uiMessage, setUiMessage] = useState(''); 
@@ -32,7 +34,7 @@ function App() {
   const [hasInit, setHasInit] = useState(false);
   const [apiStatus, setApiStatus] = useState('Idle');
 
-
+// Function to generate a new customer session ID (CSID)
   const generateNewSession = () => {
     const newCsid = 'csid-' + crypto.randomUUID();
     setCsid(newCsid);
@@ -51,7 +53,7 @@ function App() {
       generateNewSession();
     }, []);
 
-
+    // Function to change context in the cdApi
   const changeContext = (context) => {
     if (window.cdApi) {
       cdApi.changeContext(context);
@@ -59,24 +61,25 @@ function App() {
     }
   };
 
-const validateApiResponse = (action, data) => {
-  const isValid =
-    data &&
-    data.status === 'success' &&
-    typeof data.id === 'string' &&
-    typeof data.request_id === 'string';
+  // Function to validate API response
+  const validateApiResponse = (action, data) => {
+    const isValid =
+      data &&
+      data.status === 'success' &&
+      typeof data.id === 'string' &&
+      typeof data.request_id === 'string';
 
-  if (isValid) {
-    console.log('Response validation passed:', data);
-    setApiStatus(`${action} validated (success)`);
-  } else {
-    console.warn('Response validation failed:', data);
-    setApiStatus(`${action} response invalid`);
-  }
+    if (isValid) {
+      console.log('Response validation passed:', data);
+      setApiStatus(`${action} validated (success)`);
+    } else {
+      console.warn('Response validation failed:', data);
+      setApiStatus(`${action} response invalid`);
+    }
 };
 
 
-
+// Function to send API event
 const sendApiEvent = async (action, activityType) => {
   // UI status (shown on the page)
   setApiStatus(`Sending ${action}...`);
@@ -108,16 +111,15 @@ const sendApiEvent = async (action, activityType) => {
       // validateApiResponse will log to console (and later we can also update UI from there if you want)
       } catch (jsonErr) {
         console.warn('Could not parse JSON response:', jsonErr);
-        setApiStatus(`⚠️ ${action} sent, but no JSON to validate`);
+        setApiStatus(`${action} sent, but no JSON to validate`);
       }
 
     } catch (err) {
       // CORS / Network / blocked request
       console.warn('API request failed (likely CORS). Continuing flow anyway:', err);
-      setApiStatus(`⚠️ ${action} blocked (likely CORS) - continuing`);
+      setApiStatus(`${action} blocked (likely CORS) - continuing`);
     }
   };
-
 
   const handleUserAction = async ({ action, activityType, context, nextScreen }) => {
     console.log('User action:', action);
@@ -154,7 +156,6 @@ const sendApiEvent = async (action, activityType) => {
 
       <h1>BioCatch Assignment - Shahar Shlomo</h1>
 
-      <p><b>API Status:</b> {apiStatus}</p>
       <p><b>Logged In:</b> {hasInit ? 'Yes' : 'No'}</p>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', margin: '12px 0' }}>
       <button onClick={() => { setUiMessage(''); setScreen(SCREENS.HOME); }}>
@@ -218,9 +219,9 @@ const sendApiEvent = async (action, activityType) => {
             activityType: ACTIVITY_TYPES.LOGIN
           });
           setHasInit(true);
-          setUiMessage('Logged in (init called). You can now pay.');
+          setUiMessage('Logged in (init called).');
         }}>
-          Run Login (init)
+          Login (init)
         </button>
 
 
@@ -239,13 +240,6 @@ const sendApiEvent = async (action, activityType) => {
       {screen === SCREENS.PAYMENT && (
         <>
           <p>Payment Screen</p>
-
-          {!hasInit && (
-            <p style={{ color: 'crimson', textAlign: 'center' }}>
-              <b>Error:</b> You must login before making a payment.
-            </p>
-          )}
-
           <button onClick={async () => {
             if (!hasInit) {
               const msg = 'Error: Please login first (init must be called before getScore).';
@@ -279,8 +273,6 @@ const sendApiEvent = async (action, activityType) => {
           }}>
             Back to Home
         </button>
-
-
         </>
       )}
 
