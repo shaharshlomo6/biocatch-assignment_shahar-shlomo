@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
-import App from './App';
+import App from '../App';
 
 beforeEach(() => {
   // Mock BioCatch SDK object so tests won't crash
