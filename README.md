@@ -36,7 +36,7 @@ Screens:
 The webhook endpoint may block browser calls due to **CORS policy** (no `Access-Control-Allow-Origin` header).
 Because of that, the browser may fail the request before returning a readable response.
 
-This project:
+In This project:
 - The app **still continues the user flow** even if the request is blocked.
 - The app prints the error to console (expected behavior for this assignment environment).
 - If the response is available, the app attempts to parse JSON and validate it.
