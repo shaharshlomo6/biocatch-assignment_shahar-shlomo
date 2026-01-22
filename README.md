@@ -95,3 +95,10 @@ npm install
 npm run dev
 ```
 
+---
+
+## Screenshots & Recordings
+
+A folder named `screenshots and screen records` is included in this repository, containing short screenshots and screen recordings that demonstrate the user flow and the SDK/API behavior.
+
+
